@@ -178,8 +178,8 @@ function AppLayout({ children }) {
 
 /* ==================== 首页 ==================== */
 const FEATURES = [
-  { key: '/knowledge', icon: '📚', title: '知识点体系', desc: '6大章节 · 层级化知识框架', color: '#2e9e5b' },
-  { key: '/experiments', icon: '🔬', title: '实验模拟', desc: '10个核心实验 · 虚拟操作', color: '#43a047' },
+  { key: '/knowledge', icon: '📚', title: '知识点体系', desc: '5本教材·23章 · 层级化知识框架', color: '#2e9e5b' },
+  { key: '/experiments', icon: '🔬', title: '实验模拟', desc: '11个核心实验 · 虚拟操作', color: '#43a047' },
   { key: '/quiz', icon: '📝', title: '在线自测', desc: '15道精选题 · 错题回顾', color: '#66bb6a' },
   { key: '/discussion', icon: '💬', title: '互动讨论', desc: '师生问答 · 知识交流', color: '#7cb342' },
   { key: '/progress', icon: '📊', title: '学习进度', desc: '进度追踪 · 个性化建议', color: '#9ccc65' },
@@ -325,12 +325,26 @@ function ChapterSummary({ chapterId }) {
 }
 
 function KnowledgeOverview() {
-  const chapters = BioStore.getChapters();
+  const allChapters = BioStore.getChapters();
   const { user } = useAuth();
   const prog = user ? BioStore.getProgress(user.id) : null;
+  const [bookFilter, setBookFilter] = React.useState('all');
+  const books = React.useMemo(() => {
+    const map = new Map();
+    allChapters.forEach(ch => { if (ch.book && !map.has(ch.book)) map.set(ch.book, { name: ch.book, grade: ch.grade }); });
+    return Array.from(map.values());
+  }, [allChapters]);
+  const chapters = bookFilter === 'all' ? allChapters : allChapters.filter(ch => ch.book === bookFilter);
+  const bookColor = { '必修1·分子与细胞': 'green', '必修2·遗传与进化': 'blue', '选必1·稳态与调节': 'orange', '选必2·生物与环境': 'cyan', '选必3·生物技术与工程': 'purple' };
   return h(Fragment, null,
     h('div', { className: 'section-title' }, '知识点体系'),
-    h(Alert, { message: '按教材章节层级化组织', type: 'info', showIcon: true, style: { marginBottom: 16 }, description: '本平台依据人教版高中生物必修一《分子与细胞》构建完整知识点体系，共6章。点击章节进入总结页，含核心概念、重难点和知识框架图。' }),
+    h(Alert, { message: '高中全阶段·5本教材·23章', type: 'info', showIcon: true, style: { marginBottom: 16 }, description: '本平台依据人教版高中生物全套教材（必修1·分子与细胞、必修2·遗传与进化、选必1·稳态与调节、选必2·生物与环境、选必3·生物技术与工程）构建完整知识点体系，共23章。点击教材名称可筛选，点击章节进入总结页。' }),
+    h('div', { style: { marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' } },
+      h(Text, { type: 'secondary', style: { fontSize: 13 } }, '📚 按教材筛选：'),
+      h(Button, { size: 'small', type: bookFilter === 'all' ? 'primary' : 'default', onClick: () => setBookFilter('all') }, '全部 (' + allChapters.length + ')'),
+      books.map(b => h(Button, { key: b.name, size: 'small', type: bookFilter === b.name ? 'primary' : 'default', onClick: () => setBookFilter(b.name), style: bookFilter === b.name ? { background: '#2e9e5b', borderColor: '#2e9e5b' } : null },
+        b.name.replace(/^[必修选必0-9]+·/, '') + ' (' + allChapters.filter(ch => ch.book === b.name).length + ')'))
+    ),
     h(Row, { gutter: [16, 16] },
       chapters.map(ch => {
         const total = ch.sections.reduce((s, sec) => s + sec.points.length, 0);
@@ -338,7 +352,8 @@ function KnowledgeOverview() {
         const pct = total ? Math.round(viewed / total * 100) : 0;
         return h(Col, { key: ch.id, xs: 24, md: 12 },
           h(Card, { hoverable: true, onClick: () => navigate('/knowledge', { chapter: ch.id }) },
-            h('div', { className: 'flex-between', style: { marginBottom: 12 } }, h(Title, { level: 4, style: { margin: 0, color: '#2e9e5b' } }, ch.title), h(Tag, { color: 'green' }, total + ' 知识点')),
+            h('div', { className: 'flex-between', style: { marginBottom: 12 } }, h(Title, { level: 4, style: { margin: 0, color: '#2e9e5b' } }, ch.title), h(Space, null, ch.book && h(Tag, { color: bookColor[ch.book] || 'default', style: { fontSize: 11 } }, ch.grade), h(Tag, { color: 'green' }, total + ' 知识点'))),
+            ch.book && h('div', { style: { marginBottom: 8, fontSize: 12, color: '#888' } }, '📖 ' + ch.book),
             h(Paragraph, { type: 'secondary', style: { fontSize: 13, marginBottom: 12, minHeight: 44 } }, ch.summary.slice(0, 70) + '...'),
             h('div', { style: { marginBottom: 8 } }, h(Text, { type: 'secondary', style: { fontSize: 12 } }, '核心概念：'), ch.keyPoints.slice(0, 3).map((kp, i) => h(Tag, { key: i, style: { fontSize: 11, marginBottom: 4 } }, kp))),
             user && h(Progress, { percent: pct, size: 'small', strokeColor: '#2e9e5b' })));
@@ -526,6 +541,79 @@ function ExperimentSimulator({ exp }) {
         h('div', { style: { textAlign: 'center', marginTop: 12 } }, h(Button, { type: drawn ? 'default' : 'primary', onClick: () => { setVal('drawn', true); completeInteraction(); }, disabled: drawn }, drawn ? '✓ 曲线已绘制' : '绘制曲线')),
         drawn && h(Alert, { type: 'success', showIcon: true, message: '✓ 曲线呈钟形，最适pH约7.0，酶活性最高', style: { marginTop: 12 } }));
     }
+    if (t === 'select') {
+      const selected = interactionState.selected || [];
+      const correctSet = interaction.correct || [];
+      const allCorrect = selected.length === correctSet.length && correctSet.every(i => selected.indexOf(i) >= 0);
+      return h('div', { style: { marginTop: 16 } },
+        h(Alert, { type: 'info', showIcon: true, message: interaction.hint, style: { marginBottom: 12 } }),
+        h(Space, { direction: 'vertical', style: { width: '100%' } },
+          interaction.options.map((opt, i) => {
+            const isSel = selected.indexOf(i) >= 0;
+            return h(Button, { key: i, type: isSel ? 'primary' : 'default', block: true, onClick: () => { const ns = isSel ? selected.filter(x => x !== i) : [...selected, i]; setVal('selected', ns); }, disabled: interactionDone },
+              (isSel ? '✓ ' : '') + opt);
+          }),
+          h(Button, { type: 'primary', block: true, disabled: interactionDone || selected.length === 0, onClick: () => { if (allCorrect) completeInteraction(); else message.warning('选择不完全正确，再检查一下'); } }, '确认选择'),
+          interactionDone && h(Alert, { type: 'success', showIcon: true, message: '✓ 已选：' + correctSet.map(i => interaction.options[i]).join(' + ') }));
+    }
+    if (t === 'counter') {
+      const counts = interactionState.counts || {};
+      const targets = interaction.targets || [];
+      const sampleSize = interaction.sampleSize || 100;
+      const total = targets.reduce((s, t) => s + (counts[t] || 0), 0);
+      const done = total >= sampleSize;
+      return h('div', { style: { marginTop: 16 } },
+        h(Alert, { type: 'info', showIcon: true, message: interaction.hint, style: { marginBottom: 12 } }),
+        h('div', { style: { padding: 16, background: '#fafafa', borderRadius: 8 } },
+          h(Row, { gutter: 16 }, targets.map(tg => h(Col, { key: tg, span: Math.floor(24 / targets.length) },
+            h('div', { style: { textAlign: 'center', padding: 16, background: '#fff', borderRadius: 8, border: '1px solid #e8e8e8' } },
+              h('div', { style: { fontSize: 36 } }, tg === '高茎' ? '🌿' : '🌱'),
+              h(Text, { strong: true }, tg),
+              h('div', { style: { fontSize: 28, color: '#2e9e5b', margin: '8px 0' } }, counts[tg] || 0),
+              h(Button.Group, null,
+                h(Button, { size: 'small', disabled: interactionDone, onClick: () => setVal('counts', { ...counts, [tg]: Math.max(0, (counts[tg] || 0) - 1) }) }, '-1'),
+                h(Button, { size: 'small', type: 'primary', disabled: interactionDone, onClick: () => setVal('counts', { ...counts, [tg]: (counts[tg] || 0) + 1 }) }, '+1'),
+                h(Button, { size: 'small', disabled: interactionDone, onClick: () => setVal('counts', { ...counts, [tg]: (counts[tg] || 0) + 10 }) }, '+10')))))),
+          h('div', { style: { textAlign: 'center', marginTop: 12, color: done ? '#52c41a' : '#999' } }, '已统计：' + total + ' / ' + sampleSize + (total > 0 ? '  (' + targets.map(tg => tg + ':' + Math.round((counts[tg] || 0) / total * 100) + '%').join(' ') + ')' : ''))),
+        h('div', { style: { textAlign: 'center', marginTop: 12 } }, h(Button, { type: interactionDone ? 'default' : 'primary', disabled: interactionDone || !done, onClick: () => completeInteraction() }, interactionDone ? '✓ 已统计完成' : '完成统计')),
+        interactionDone && h(Alert, { type: 'success', showIcon: true, message: '✓ 统计完成！高茎:矮茎 ≈ 3:1，验证孟德尔分离定律', style: { marginTop: 12 } }));
+    }
+    if (t === 'punnett') {
+      const cells = interactionState.cells || {};
+      const gametes = interaction.gametes || ['D', 'd'];
+      const expected = { 'D,D': 'DD', 'D,d': 'Dd', 'd,D': 'Dd', 'd,d': 'dd' };
+      const allFilled = gametes.every(g1 => gametes.every(g2 => cells[g1 + ',' + g2]));
+      const checkCell = (g1, g2) => {
+        const key = g1 + ',' + g2;
+        const expectedVal = expected[key];
+        const inputVal = cells[key];
+        if (inputVal) {
+          if (inputVal.replace(/\s/g, '').toUpperCase() === expectedVal.toUpperCase()) return 'correct';
+          return 'wrong';
+        }
+        return 'empty';
+      };
+      return h('div', { style: { marginTop: 16 } },
+        h(Alert, { type: 'info', showIcon: true, message: interaction.hint, style: { marginBottom: 12 } }),
+        h('div', { style: { padding: 16, background: '#fafafa', borderRadius: 8, overflowX: 'auto' } },
+          h('table', { style: { borderCollapse: 'collapse', margin: '0 auto', minWidth: 240 } },
+            h('thead', null, h('tr', null,
+              h('th', { style: { border: '1px solid #999', padding: 12, background: '#e6f7e6', fontSize: 18 } }, '配子'),
+              gametes.map(g => h('th', { key: g, style: { border: '1px solid #999', padding: 12, background: '#e6f7e6', fontSize: 18, color: '#2e9e5b', fontWeight: 'bold' } }, g))),
+            h('tbody', null, gametes.map(g1 => h('tr', { key: g1 },
+              h('td', { style: { border: '1px solid #999', padding: 12, background: '#e6f7e6', fontSize: 18, color: '#2e9e5b', fontWeight: 'bold', textAlign: 'center' } }, g1),
+              gametes.map(g2 => {
+                const key = g1 + ',' + g2;
+                const status = checkCell(g1, g2);
+                const bg = status === 'correct' ? '#f6ffed' : status === 'wrong' ? '#fff1f0' : '#fff';
+                const border = status === 'correct' ? '#52c41a' : status === 'wrong' ? '#f5222d' : '#999';
+                return h('td', { key: g2, style: { border: '1px solid ' + border, padding: 4, background: bg, textAlign: 'center' } },
+                  h('input', { value: cells[key] || '', onChange: e => setVal('cells', { ...cells, [key]: e.target.value }), disabled: interactionDone, placeholder: '?', style: { width: 50, textAlign: 'center', fontSize: 16, border: 'none', background: 'transparent', fontWeight: 'bold', color: status === 'correct' ? '#2e9e5b' : status === 'wrong' ? '#f5222d' : '#333' } }));
+              }))))),
+          h('div', { style: { textAlign: 'center', marginTop: 12, fontSize: 13, color: '#888' } }, '提示：D×D=DD（高茎），D×d=Dd（高茎），d×d=dd（矮茎）')),
+        h('div', { style: { textAlign: 'center', marginTop: 12 } }, h(Button, { type: interactionDone ? 'default' : 'primary', disabled: interactionDone || !allFilled, onClick: () => { const allCorrect = gametes.every(g1 => gametes.every(g2 => checkCell(g1, g2) === 'correct')); if (allCorrect) completeInteraction(); else message.warning('部分格子填写不正确，请检查'); } }, interactionDone ? '✓ 棋盘格已完成' : '检查棋盘格')),
+        interactionDone && h(Alert, { type: 'success', showIcon: true, message: '✓ 棋盘格正确！F2 基因型 1DD:2Dd:1dd，表现型 3 高茎:1 矮茎', style: { marginTop: 12 } }));
+    }
     return h(Alert, { type: 'info', showIcon: true, message: '点击"执行操作"完成此步骤', style: { marginTop: 12 } });
   };
 
@@ -572,7 +660,7 @@ function ExperimentList() {
   const myReports = user ? BioStore.getReports(user.id) : [];
   return h(Fragment, null,
     h('div', { className: 'section-title' }, '教学实验模拟平台'),
-    h(Alert, { message: '10个高中生物核心实验 · 交互式虚拟操作', type: 'success', showIcon: true, style: { marginBottom: 16 }, description: '提供实验步骤引导、虚拟操作界面和实验现象模拟，支持数据记录与实验报告生成。点击实验卡片开始模拟。' }),
+    h(Alert, { message: '11个高中生物核心实验 · 交互式虚拟操作', type: 'success', showIcon: true, style: { marginBottom: 16 }, description: '提供实验步骤引导、虚拟操作界面和实验现象模拟，支持数据记录与实验报告生成。点击实验卡片开始模拟。' }),
     h(Row, { gutter: [16, 16] },
       exps.map(exp => {
         const diff = EXP_DIFF[exp.difficulty] || EXP_DIFF[2];

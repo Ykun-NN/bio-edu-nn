@@ -1261,6 +1261,31 @@ window.BioData = (function () {
         { desc: '制片：压片使细胞分散，显微镜观察', visual: '🔬', action: 'observe', expected: '观察到不同分裂时期的细胞' }
       ],
       result: '分生区细胞呈正方形，排列紧密。间期细胞最多（占90%-95%）；中期染色体形态清晰、排列在赤道板上，是观察最佳时期；后期可见染色体移向两极。解离已杀死细胞，故观察到的是死细胞静态。甲紫/醋酸洋红为碱性染料染染色体。'
+    },
+    {
+      id: 'exp11', title: '模拟孟德尔遗传杂交实验（一对相对性状）',
+      category: '遗传模拟', difficulty: 3, duration: '25分钟',
+      objective: '通过模拟豌豆高茎/矮茎一对相对性状的杂交实验，理解基因的分离定律，验证 F2 代 3:1 性状分离比。',
+      materials: ['纯合高茎豌豆（DD）', '纯合矮茎豌豆（dd）', '杂交套袋', '记录表', '统计工具'],
+      steps: [
+        { desc: '选择亲本：选取纯合高茎豌豆（DD）和纯合矮茎豌豆（dd）作为亲本 P', visual: '🌱', action: 'select_parent', expected: '亲本基因型：DD（高茎）× dd（矮茎）',
+          interaction: { type: 'select', tool: 'parent', options: ['纯合高茎DD', '纯合矮茎dd'], hint: '选择亲本：纯合高茎（DD）作父本，纯合矮茎（dd）作母本', correct: [0, 1] } },
+        { desc: 'P 代杂交：去掉未成熟花的雄蕊，套袋后授以另一亲本花粉', visual: '🌼', action: 'cross_p', expected: '完成 P 代杂交，获得 F1 种子',
+          interaction: { type: 'sequence', steps: [
+            { tool: 'tweezers', action: '去雄（去除未成熟花的雄蕊）', hint: '用镊子去除母本未成熟花的雄蕊，防止自花授粉' },
+            { tool: 'bag', action: '套袋隔离', hint: '套上纸袋隔离其他花粉' },
+            { tool: 'brush', action: '人工授粉（授父本花粉）', hint: '待雌蕊成熟，用毛笔蘸取父本花粉授到母本柱头上' }
+          ], hint: '豌豆是严格自花授粉植物，杂交前必须去雄套袋' } },
+        { desc: '观察 F1 代：种植 F1 种子，观察 F1 植株性状', visual: '🌿', action: 'observe_f1', expected: 'F1 全部为高茎（Dd），矮茎性状被遮盖',
+          interaction: { type: 'observe', tool: 'eyes', hint: '观察 F1 代所有植株的茎高度', correctObservation: 'F1 全部高茎（显性性状）' } },
+        { desc: 'F1 自交：F1 植株自花授粉，获得 F2 种子', visual: '🌾', action: 'self_f1', expected: 'F1（Dd）自交，产生 F2 种子',
+          interaction: { type: 'click', tool: 'bag', hint: 'F1 植株自花授粉（套袋保护即可，无需去雄）' } },
+        { desc: '统计 F2 代性状：种植 F2 种子，统计高茎和矮茎植株数量', visual: '📊', action: 'count_f2', expected: 'F2 代出现高茎和矮茎两种性状（约 3:1）',
+          interaction: { type: 'counter', tool: 'counter', targets: ['高茎', '矮茎'], sampleSize: 100, hint: '统计 F2 代 100 株：高茎约 75 株，矮茎约 25 株，比例接近 3:1' } },
+        { desc: '遗传分析：用棋盘格法分析 F1 配子组合，验证分离比', visual: '🧬', action: 'analyze', expected: 'F1 配子 D 和 d 各占 1/2，F2 基因型 1DD:2Dd:1dd，表现型 3 高:1 矮',
+          interaction: { type: 'punnett', tool: 'punnett-square', gametes: ['D', 'd'], hint: '填写 Punnett 棋盘格：D×D=DD（高），D×d=Dd（高），d×D=Dd（高），d×d=dd（矮）' } }
+      ],
+      result: 'P（DD×dd）→ F1 全为高茎（Dd，显性）；F1 自交（Dd×Dd）→ F2 表现型分离比 高茎:矮茎 ≈ 3:1，基因型比 DD:Dd:dd = 1:2:1。验证了分离定律：杂合子形成配子时，等位基因彼此分离，分别进入不同配子。F1 全为显性性状说明显性基因 D 对隐性基因 d 完全显性；F2 出现隐性性状说明隐性基因在 F1 中未消失而是被遮盖。'
     }
   ];
 
