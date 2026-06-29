@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>高一生物教学平台 - BioEdu</title>
+  <meta name="description" content="面向高一生物教学的专业网站，提供知识点管理、实验模拟、互动教学等功能" />
+
+  <!-- React 18 UMD -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+
+  <!-- dayjs (AntD 依赖) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+
+  <!-- Ant Design 5 UMD -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/5.14.0/antd.min.js"></script>
+
+  <!-- Babel Standalone 用于浏览器编译 JSX -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.6/babel.min.js"></script>
+
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div id="root"></div>
+  <div id="err" style="padding:16px;font-family:monospace;white-space:pre-wrap;color:#d32f2f;background:#ffebee;border-top:1px solid #ef9a9a;display:none"></div>
+  <script>
+    window.onerror = function(msg, src, line, col, err) {
+      var e = document.getElementById('err');
+      if (e) { e.style.display = 'block'; e.textContent = '[运行时错误] ' + msg + '\n  at ' + src + ':' + line + ':' + col + (err && err.stack ? '\n' + err.stack : ''); }
+      return false;
+    };
+    window.addEventListener('unhandledrejection', function(ev) {
+      var e = document.getElementById('err');
+      if (e) { e.style.display = 'block'; e.textContent += '\n[Promise 未捕获] ' + (ev.reason && ev.reason.message ? ev.reason.message : ev.reason); }
+    });
+    window.__bioLoadStart = Date.now();
+    setTimeout(function() {
+      var root = document.getElementById('root');
+      if (root && root.children.length === 0) {
+        var e = document.getElementById('err');
+        if (e) { e.style.display = 'block'; e.textContent = '[加载超时] 页面 20 秒后仍为空白。可能原因：\n1. CDN 资源加载失败（检查网络）\n2. app.js Babel 编译失败（按 F12 查看控制台）\n3. app.js 运行时错误\n已耗时: ' + (Date.now() - window.__bioLoadStart) + 'ms'; }
+      }
+    }, 20000);
+  </script>
+
+  <!-- 数据层与存储层（普通脚本，提供全局对象） -->
+  <script src="./js/data.js"></script>
+  <script src="./js/store.js"></script>
+
+  <!-- 应用层（通过 Babel 编译，支持 ES6+ 语法转换） -->
+  <script type="text/babel" data-presets="react" src="./js/app.js"></script>
+</body>
+</html>
